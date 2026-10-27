@@ -2,7 +2,12 @@ defmodule RaxolSymphony.MixProject do
   use Mix.Project
 
   @version "0.2.1"
-  @source_url "https://github.com/DROOdotFOO/raxol"
+  @source_url "https://github.com/DROOdotFOO/raxol-symphony"
+
+  # Frozen per ADR-0043: every raxol package is a git dep pinned to the last
+  # DROOdotFOO/raxol commit this package built against.
+  @raxol_git "https://github.com/DROOdotFOO/raxol.git"
+  @raxol_ref "ce40937c452bf9f076d18e9ff30d8cb645ab3cd6"
 
   def project do
     [
@@ -36,31 +41,41 @@ defmodule RaxolSymphony.MixProject do
 
   defp deps do
     [
-      raxol_dep(:raxol_core, "~> 2.8", "../raxol_core"),
+      raxol_dep(:raxol_core, "packages/raxol_core"),
 
       # Main raxol (Lifecycle runtime, Recording for evidence). Compile-time only --
       # runtime: false keeps :raxol out of this package's .app applications list so
       # the host (which owns raxol) controls its boot, avoiding circular OTP startup.
-      raxol_dep(:raxol, "~> 2.7", "../..", optional: true, runtime: false),
+      raxol_dep(:raxol, nil, optional: true, runtime: false),
 
       # Agent runner backend. Optional at compile time so the orchestrator core
-      # can be exercised in tests with a noop runner. Local path in dev so we
-      # pick up Stream.Event / EventForwarder helpers ahead of next hex release.
-      raxol_dep(:raxol_agent, "~> 2.7", "../raxol_agent", optional: true),
+      # can be exercised in tests with a noop runner.
+      raxol_dep(:raxol_agent, "packages/raxol_agent", optional: true),
 
       # raxol_earn is pulled in test env ONLY to exercise the canonical
       # cross-package auto-resume flow (Job.Server transition telemetry ->
       # Resumer -> Orchestrator.resume_run). Symphony does not depend on
       # ACP at runtime or compile time outside tests.
-      raxol_dep(:raxol_earn, "~> 0.2", "../raxol_earn", only: :test),
+      raxol_dep(:raxol_earn, "packages/raxol_earn", only: :test),
 
-      # MCP surface (optional). Local path in dev for ToolDef + register_all.
-      raxol_dep(:raxol_mcp, "~> 2.7", "../raxol_mcp", optional: true),
+      # MCP surface (optional).
+      raxol_dep(:raxol_mcp, "packages/raxol_mcp", optional: true),
 
       # LiveView/Telegram/Watch surfaces -- all optional, gated at runtime.
-      raxol_dep(:raxol_liveview, "~> 2.7", "../raxol_liveview", optional: true),
-      raxol_dep(:raxol_telegram, "~> 0.2", "../raxol_telegram", optional: true),
-      raxol_dep(:raxol_watch, "~> 0.2", "../raxol_watch", optional: true),
+      raxol_dep(:raxol_liveview, "packages/raxol_liveview", optional: true),
+      raxol_dep(:raxol_telegram, "packages/raxol_telegram", optional: true),
+      raxol_dep(:raxol_watch, "packages/raxol_watch", optional: true),
+
+      # Transitive raxol packages. Their own mix.exs files name siblings by
+      # relative path, which a sparse checkout lacks, so each is pinned here.
+      raxol_dep(:raxol_terminal, "packages/raxol_terminal", optional: true),
+      raxol_dep(:raxol_sensor, "packages/raxol_sensor", optional: true),
+      raxol_dep(:raxol_plugin, "packages/raxol_plugin", optional: true),
+      raxol_dep(:raxol_agent_client_protocol, "packages/raxol_agent_client_protocol",
+        optional: true
+      ),
+      raxol_dep(:raxol_web3, "packages/raxol_web3", optional: true),
+      raxol_dep(:raxol_payments, "packages/raxol_payments", only: :test),
 
       # YAML front matter parsing.
       {:yaml_elixir, "~> 2.12"},
@@ -93,26 +108,10 @@ defmodule RaxolSymphony.MixProject do
     ]
   end
 
-  defp raxol_dep(name, version, path, opts \\ []) do
-    if hex_package?() do
-      case opts do
-        [] -> {name, version}
-        opts -> {name, version, opts}
-      end
-    else
-      {name, version, Keyword.merge([path: path, override: true], opts)}
-    end
-  end
-
-  # Hex form for a publish (HEX_BUILD=1) and inside a Hex install, which Hex
-  # marks by unpacking hex_metadata.config beside mix.exs; a path dep anywhere
-  # else, whether or not the directory exists. Dependabot resolves a bump in a
-  # sandbox holding only mix.exs and mix.lock, and reading that absence as a
-  # Hex install locked the siblings as Hex packages, which
-  # scripts/check_lock_path_shadows.exs rejects. The directory check also made
-  # `../..` a path dep inside a consumer's deps/: a parent always exists.
-  defp hex_package? do
-    System.get_env("HEX_BUILD") != nil or File.exists?("hex_metadata.config")
+  defp raxol_dep(name, sparse, opts \\ []) do
+    git = [git: @raxol_git, ref: @raxol_ref, depth: 1, override: true]
+    git = if sparse, do: Keyword.put(git, :sparse, sparse), else: git
+    {name, Keyword.merge(git, opts)}
   end
 
   defp description do
@@ -131,8 +130,7 @@ defmodule RaxolSymphony.MixProject do
       links: %{
         "GitHub" => @source_url,
         "Docs" => "https://hexdocs.pm/raxol_symphony",
-        "Changelog" =>
-          "https://github.com/DROOdotFOO/raxol/blob/master/packages/raxol_symphony/CHANGELOG.md"
+        "Changelog" => "https://github.com/DROOdotFOO/raxol-symphony/blob/main/CHANGELOG.md"
       },
       maintainers: ["Raxol Team"],
       files: ~w(lib .formatter.exs mix.exs README.md LICENSE.md CHANGELOG.md)

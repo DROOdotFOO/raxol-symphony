@@ -1,0 +1,7 @@
+# The toolchain raxol `ce40937c4` (the pinned dependency commit) was built and
+# tested with. Copied from that commit's mise.toml when this repository was
+# frozen; a newer toolchain is untested here.
+
+[tools]
+erlang = "29.0.3"
+elixir = "1.20.2-otp-29"

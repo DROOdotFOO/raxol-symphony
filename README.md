@@ -1,5 +1,11 @@
 # Raxol Symphony
 
+> **Frozen 2026-10-27 per ADR-0043 Decision 6: unpublished, CI off, pinned to
+> raxol `ce40937c4`; returns only as a Hex consumer of both repos.** History
+> was extracted from `packages/raxol_symphony` in
+> [DROOdotFOO/raxol](https://github.com/DROOdotFOO/raxol) with `git filter-repo`.
+> Every raxol package is a git dependency pinned to that commit (see `mix.exs`).
+
 A Raxol port of [OpenAI Symphony](https://github.com/openai/symphony): an
 orchestrator that turns tracker work into autonomous coding-agent runs. Each
 issue gets an isolated workspace, runs an agent until the work reaches a
