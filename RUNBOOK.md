@@ -1,5 +1,12 @@
 # Symphony Graduation Runbook
 
+> **Historical.** Written while this package lived at `packages/raxol_symphony`
+> in DROOdotFOO/raxol and was headed for Hex. Since the 2026-10-27 freeze
+> (ADR-0043) it is never published, and its dependencies carry known
+> advisories: do not run it against a live repository. Paths below that start
+> with `packages/raxol_symphony` mean this repository's root, and the publish
+> step (section 6) no longer applies.
+
 The steps a human runs to graduate `raxol_symphony`: drive real issues to PRs
 against a live GitHub repo, capture evidence, then publish 0.2.0 to Hex. The
 code is release-packaged; these steps are the parts an agent cannot do
@@ -14,7 +21,8 @@ Per issue #503 the natural first target is **dogfooding this repo**
 - An AI backend key for the runner, e.g. `ANTHROPIC_API_KEY`. See the backend
   table in the root `ROADMAP.md` for the alternatives.
 - `git` and `gh` on `PATH`. Optional: `cloc` for richer complexity evidence.
-- Deps synced: `cd packages/raxol_symphony && MIX_ENV=test mix deps.get`.
+- Deps synced: `cd packages/raxol_symphony && MIX_ENV=test mix deps.get`
+  (historical path; in this repository, run it from the root).
 
 ## 2. Blast-radius control (do this first)
 
@@ -70,7 +78,7 @@ inline path, or `graph` for the per-node checkpointed pipeline.
 ## 4. start the orchestrator
 
 ```elixir
-# from packages/raxol_symphony, `iex -S mix`
+# from packages/raxol_symphony (historical path; this repository's root), `iex -S mix`
 {:ok, _sup} = Raxol.Symphony.Supervisor.start_link(workflow_path: "WORKFLOW.md")
 ```
 
@@ -108,9 +116,11 @@ Raxol.Symphony.Evidence.collect(config, %{
 Save the resulting PR URL(s), CI status, and `.cast` path(s) as the graduation
 evidence.
 
-## 6. Publish 0.2.0 to Hex
+## 6. Publish 0.2.0 to Hex (historical, no longer applies)
 
-Once at least one issue has been driven to a PR with evidence captured:
+Kept as the pre-freeze record. The frozen `mix.exs` has no `HEX_BUILD` mode and
+takes raxol as git dependencies, which Hex cannot publish. The original step:
+once at least one issue has been driven to a PR with evidence captured:
 
 ```bash
 cd packages/raxol_symphony
